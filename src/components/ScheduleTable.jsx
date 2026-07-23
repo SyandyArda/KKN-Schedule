@@ -17,7 +17,7 @@ const getMeta = (kat) => KATEGORI_META[kat] ?? DEFAULT_META;
 /**
  * Main schedule table with vertical cell-merging per date.
  */
-export default function ScheduleTable({ activities, onEdit, onDelete, onViewDaily, filterKat }) {
+export default function ScheduleTable({ activities, onEdit, onDelete, onViewDaily, filterKat, isAdmin }) {
   /** Group by tanggal for rowspan */
   const grouped = useMemo(() => {
     const map = {};
@@ -47,8 +47,8 @@ export default function ScheduleTable({ activities, onEdit, onDelete, onViewDail
               { label: 'Keterangan Kegiatan', w: 'auto' },
               { label: 'Penanggung Jawab',  w: '135px' },
               { label: 'Catatan',           w: '145px' },
-              { label: 'Aksi',              w: '76px'  },
-            ].map(({ label, w }) => (
+              { label: 'Aksi',              w: '76px', hide: !isAdmin },
+            ].filter(col => !col.hide).map(({ label, w }) => (
               <th key={label}
                 style={{ width: w, minWidth: w === 'auto' ? '180px' : w }}
                 className="px-2.5 py-3 text-left text-[11px] font-bold text-white
@@ -184,18 +184,20 @@ export default function ScheduleTable({ activities, onEdit, onDelete, onViewDail
                 </td>
 
                 {/* Aksi */}
-                <td className="px-2.5 py-2 border-b border-gray-100/80 align-middle">
-                  <div className="flex gap-1.5 items-center">
-                    <ActionBtn id={`edit-btn-${act.id}`} onClick={() => onEdit(act)}
-                      title="Edit" color="text-blue-500 hover:bg-blue-50">
-                      <Pencil size={13} />
-                    </ActionBtn>
-                    <ActionBtn id={`delete-btn-${act.id}`} onClick={() => onDelete(act.id)}
-                      title="Hapus" color="text-red-400 hover:bg-red-50">
-                      <Trash2 size={13} />
-                    </ActionBtn>
-                  </div>
-                </td>
+                {isAdmin && (
+                  <td className="px-2.5 py-2 border-b border-gray-100/80 align-middle">
+                    <div className="flex gap-1.5 items-center">
+                      <ActionBtn id={`edit-btn-${act.id}`} onClick={() => onEdit(act)}
+                        title="Edit" color="text-blue-500 hover:bg-blue-50">
+                        <Pencil size={13} />
+                      </ActionBtn>
+                      <ActionBtn id={`delete-btn-${act.id}`} onClick={() => onDelete(act.id)}
+                        title="Hapus" color="text-red-400 hover:bg-red-50">
+                        <Trash2 size={13} />
+                      </ActionBtn>
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}

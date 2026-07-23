@@ -13,31 +13,49 @@ import { supabase } from './lib/supabase';
 
 /* ── Category filter options ── */
 const KAT_FILTERS = [
-  { value: 'all',       label: 'Semua',        emoji: '📋' },
-  { value: 'proker',    label: 'Proker',        emoji: '🎯' },
-  { value: 'ibadah',    label: 'Ibadah',        emoji: '🕌' },
-  { value: 'rutin',     label: 'Rutin',         emoji: '🏃' },
-  { value: 'evaluasi',  label: 'Evaluasi',      emoji: '📊' },
-  { value: 'istirahat', label: 'Istirahat',     emoji: '💤' },
+  { value: 'all', label: 'Semua', emoji: '📋' },
+  { value: 'proker', label: 'Proker', emoji: '🎯' },
+  { value: 'ibadah', label: 'Ibadah', emoji: '🕌' },
+  { value: 'rutin', label: 'Rutin', emoji: '🏃' },
+  { value: 'evaluasi', label: 'Evaluasi', emoji: '📊' },
+  { value: 'istirahat', label: 'Istirahat', emoji: '💤' },
 ];
 
 export default function App() {
-  const [activities,  setActivities]  = useState([]);
-  const [isLoading,   setIsLoading]   = useState(true);
-  const [activeWeek,  setActiveWeek]  = useState(1);
-  const [modalOpen,   setModalOpen]   = useState(false);
-  const [editTarget,  setEditTarget]  = useState(null);
-  const [deleteTarget,setDeleteTarget]= useState(null);
+  const [activities, setActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+  const [activeWeek, setActiveWeek] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedDateForModal, setSelectedDateForModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [katFilter,   setKatFilter]   = useState('all');
-  const [toast,       setToast]       = useState(null);
-  const [exporting,   setExporting]   = useState(false);
+  const [katFilter, setKatFilter] = useState('all');
+  const [toast, setToast] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3200);
   }, []);
+
+  const handleToggleAdmin = () => {
+    if (isAdmin) {
+      setIsAdmin(false);
+      localStorage.removeItem('isAdmin');
+      showToast('Mode Admin dinonaktifkan', 'success');
+    } else {
+      const pin = prompt('Tanya ke Arda');
+      if (pin === 'KKN057') {
+        setIsAdmin(true);
+        localStorage.setItem('isAdmin', 'true');
+        showToast('Mode Admin aktif', 'success');
+      } else if (pin !== null) {
+        alert('PIN Salah!');
+      }
+    }
+  };
 
   /* ── Fetch Data from Supabase ── */
   const fetchActivities = useCallback(async () => {
@@ -142,9 +160,9 @@ export default function App() {
     }
   }, [showToast]);
 
-  const handleEdit         = useCallback((activity) => { setEditTarget(activity); setModalOpen(true); }, []);
-  const handleDeleteClick  = useCallback((id)       => { setDeleteTarget(activities.find((a) => a.id === id)); }, [activities]);
-  
+  const handleEdit = useCallback((activity) => { setEditTarget(activity); setModalOpen(true); }, []);
+  const handleDeleteClick = useCallback((id) => { setDeleteTarget(activities.find((a) => a.id === id)); }, [activities]);
+
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     try {
@@ -181,11 +199,11 @@ export default function App() {
   }, [activities, showToast]);
 
   const clearFilters = () => { setSearchQuery(''); setKatFilter('all'); };
-  const hasFilter    = searchQuery.trim() || katFilter !== 'all';
+  const hasFilter = searchQuery.trim() || katFilter !== 'all';
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f0f7f2 0%, #e8f4ed 100%)' }}>
-      <Header totalActivities={activities.length} />
+    <div className="min-h-screen pb-16" style={{ background: '#f5f9f6', fontFamily: 'Inter, sans-serif' }}>
+      <Header totalActivities={activities.length} isAdmin={isAdmin} onToggleAdmin={handleToggleAdmin} />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-5 space-y-4">
 
@@ -216,20 +234,22 @@ export default function App() {
                 <span className="sm:hidden">Excel</span>
               </button>
 
-              {/* Add button */}
-              <button
-                id="add-activity-btn"
-                onClick={openAddModal}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm text-white
-                           whitespace-nowrap transition-all cursor-pointer hover:opacity-90 active:scale-95
-                           fab-pulse shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #004d26, #006633)' }}
-              >
-                <Plus size={16} strokeWidth={2.5} />
-                <span className="hidden sm:inline">Tambah Kegiatan</span>
-                <span className="sm:hidden">Tambah</span>
-              </button>
+              {/* Add button (Desktop) */}
+              {isAdmin && (
+                <button
+                  id="add-activity-btn"
+                  onClick={openAddModal}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm text-white
+                             whitespace-nowrap transition-all cursor-pointer hover:opacity-90 active:scale-95
+                             fab-pulse shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #004d26, #006633)' }}
+                >
+                  <Plus size={16} strokeWidth={2.5} />
+                  <span className="hidden sm:inline">Tambah Kegiatan</span>
+                  <span className="sm:hidden">Tambah</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -262,7 +282,7 @@ export default function App() {
                              border transition-all cursor-pointer"
                   style={katFilter === value
                     ? { background: '#006633', color: '#fff', borderColor: '#006633' }
-                    : { background: '#fff',    color: '#555', borderColor: '#e5e7eb' }}
+                    : { background: '#fff', color: '#555', borderColor: '#e5e7eb' }}
                 >
                   <span>{emoji}</span> {label}
                 </button>
@@ -305,10 +325,10 @@ export default function App() {
             {/* Legend */}
             <div className="hidden lg:flex items-center gap-3">
               {[
-                { emoji: '🕌', label: 'Ibadah',    color: '#16a34a' },
-                { emoji: '🏃', label: 'Rutin',     color: '#6b7280' },
-                { emoji: '🎯', label: 'Proker',    color: '#2563eb' },
-                { emoji: '📊', label: 'Evaluasi',  color: '#7c3aed' },
+                { emoji: '🕌', label: 'Ibadah', color: '#16a34a' },
+                { emoji: '🏃', label: 'Rutin', color: '#6b7280' },
+                { emoji: '🎯', label: 'Proker', color: '#2563eb' },
+                { emoji: '📊', label: 'Evaluasi', color: '#7c3aed' },
                 { emoji: '💤', label: 'Istirahat', color: '#d97706' },
               ].map(({ emoji, label, color }) => (
                 <span key={label} className="flex items-center gap-1 text-[10px] text-gray-500">
@@ -332,6 +352,7 @@ export default function App() {
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
                 onViewDaily={(date) => setSelectedDateForModal(date)}
+                isAdmin={isAdmin}
               />
             ) : (
               <EmptyState weekNumber={activeWeek} />
@@ -346,19 +367,21 @@ export default function App() {
       </main>
 
       {/* FAB (mobile) */}
-      <button
-        id="fab-add-btn"
-        onClick={openAddModal}
-        disabled={isLoading}
-        className="fixed bottom-6 right-6 sm:hidden w-14 h-14 rounded-full text-white shadow-xl
-                   flex items-center justify-center fab-pulse cursor-pointer z-40
-                   hover:scale-110 active:scale-95 transition-transform
-                   disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ background: 'linear-gradient(135deg, #004d26, #006633)' }}
-        aria-label="Tambah Kegiatan"
-      >
-        <Plus size={26} strokeWidth={2.5} />
-      </button>
+      {isAdmin && (
+        <button
+          id="fab-add-btn"
+          onClick={openAddModal}
+          disabled={isLoading}
+          className="fixed bottom-6 right-6 sm:hidden w-14 h-14 rounded-full text-white shadow-xl
+                     flex items-center justify-center fab-pulse cursor-pointer z-40
+                     hover:scale-110 active:scale-95 transition-transform
+                     disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{ background: 'linear-gradient(135deg, #004d26, #006633)' }}
+          aria-label="Tambah Kegiatan"
+        >
+          <Plus size={26} strokeWidth={2.5} />
+        </button>
+      )}
 
       {/* Modals */}
       <ActivityModal isOpen={modalOpen} onClose={() => setModalOpen(false)}
@@ -366,12 +389,12 @@ export default function App() {
 
       <DeleteConfirmModal isOpen={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm} activityName={deleteTarget?.keterangan ?? ''} />
-        
-      <DailyScheduleModal 
-        isOpen={Boolean(selectedDateForModal)} 
-        onClose={() => setSelectedDateForModal(null)} 
-        date={selectedDateForModal} 
-        activities={activities} 
+
+      <DailyScheduleModal
+        isOpen={Boolean(selectedDateForModal)}
+        onClose={() => setSelectedDateForModal(null)}
+        date={selectedDateForModal}
+        activities={activities}
       />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

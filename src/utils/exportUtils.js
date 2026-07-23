@@ -94,3 +94,18 @@ export function exportToExcel(activities) {
 
   XLSX.writeFile(wb, 'Jadwal_KKN_057_Muhammadiyah.xlsx');
 }
+
+/**
+ * Export a specific day's activities to Excel.
+ */
+export function exportDailyToExcel(dailyActivities, dateString) {
+  if (!dailyActivities || dailyActivities.length === 0) return;
+  const wb = XLSX.utils.book_new();
+  
+  const ws = XLSX.utils.json_to_sheet(toRows(dailyActivities));
+  applyColWidths(ws);
+  XLSX.utils.book_append_sheet(wb, ws, 'Jadwal Harian');
+
+  const filename = `Jadwal_Harian_KKN057_${dateString}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}

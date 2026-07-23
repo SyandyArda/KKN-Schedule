@@ -1,11 +1,11 @@
 import React from 'react';
-import { Calendar, Users, BookOpen } from 'lucide-react';
+import { Calendar, Users, BookOpen, Lock, Unlock } from 'lucide-react';
 
 /**
  * Application header with Muhammadiyah branding.
  * Gradient applied directly on <header> to guarantee visibility.
  */
-export default function Header({ totalActivities }) {
+export default function Header({ totalActivities, isAdmin, onToggleAdmin }) {
   return (
     <header
       className="relative overflow-hidden"
@@ -52,8 +52,15 @@ export default function Header({ totalActivities }) {
             >
               Kuliah Kerja Nyata
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-lg">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-lg flex items-center justify-center sm:justify-start gap-3">
               SCHEDULE KKN 057
+              <button 
+                onClick={onToggleAdmin}
+                className="opacity-60 hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-white/10 cursor-pointer"
+                title={isAdmin ? "Exit Admin Mode" : "Enter Admin Mode"}
+              >
+                {isAdmin ? <Unlock size={20} className="text-[#86efac]" /> : <Lock size={20} className="text-white/70" />}
+              </button>
             </h1>
             <h2 className="text-sm sm:text-base md:text-lg font-semibold mt-0.5"
               style={{ color: '#bbf7d0' }}>
