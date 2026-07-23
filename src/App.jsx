@@ -6,6 +6,7 @@ import ScheduleTable from './components/ScheduleTable';
 import ActivityModal from './components/ActivityModal';
 import DeleteConfirmModal from './components/DeleteConfirmModal';
 import EmptyState from './components/EmptyState';
+import DailyScheduleModal from './components/DailyScheduleModal';
 import Toast from './components/Toast';
 import { exportToExcel } from './utils/exportUtils';
 import { supabase } from './lib/supabase';
@@ -27,6 +28,7 @@ export default function App() {
   const [modalOpen,   setModalOpen]   = useState(false);
   const [editTarget,  setEditTarget]  = useState(null);
   const [deleteTarget,setDeleteTarget]= useState(null);
+  const [selectedDateForModal, setSelectedDateForModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [katFilter,   setKatFilter]   = useState('all');
   const [toast,       setToast]       = useState(null);
@@ -329,6 +331,7 @@ export default function App() {
                 activities={displayed}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
+                onViewDaily={(date) => setSelectedDateForModal(date)}
               />
             ) : (
               <EmptyState weekNumber={activeWeek} />
@@ -363,6 +366,13 @@ export default function App() {
 
       <DeleteConfirmModal isOpen={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm} activityName={deleteTarget?.keterangan ?? ''} />
+        
+      <DailyScheduleModal 
+        isOpen={Boolean(selectedDateForModal)} 
+        onClose={() => setSelectedDateForModal(null)} 
+        date={selectedDateForModal} 
+        activities={activities} 
+      />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

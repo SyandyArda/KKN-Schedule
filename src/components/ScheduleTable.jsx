@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pencil, Trash2, Clock, StickyNote } from 'lucide-react';
+import { Pencil, Trash2, Clock, StickyNote, Eye } from 'lucide-react';
 import { formatTanggalShort } from '../utils/dateUtils';
 
 /** Category metadata used for visual styling */
@@ -17,7 +17,7 @@ const getMeta = (kat) => KATEGORI_META[kat] ?? DEFAULT_META;
 /**
  * Main schedule table with vertical cell-merging per date.
  */
-export default function ScheduleTable({ activities, onEdit, onDelete, filterKat }) {
+export default function ScheduleTable({ activities, onEdit, onDelete, onViewDaily, filterKat }) {
   /** Group by tanggal for rowspan */
   const grouped = useMemo(() => {
     const map = {};
@@ -119,6 +119,15 @@ export default function ScheduleTable({ activities, onEdit, onDelete, filterKat 
                           {rowspan} kegiatan
                         </span>
                       )}
+                      {/* View Daily Schedule Button */}
+                      <button
+                        onClick={() => onViewDaily && onViewDaily(act.tanggal)}
+                        className="mt-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-green-700 bg-green-50 hover:bg-green-600 hover:text-white border border-green-200 hover:border-green-600 transition-all cursor-pointer shadow-sm"
+                        title="Lihat Jadwal Full"
+                      >
+                        <Eye size={12} />
+                        Detail
+                      </button>
                     </div>
                   </td>
                 )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Calendar, Clock, User, FileText, StickyNote, Tag } from 'lucide-react';
+import { X, Save, AlertCircle, Calendar, Clock, User, FileText, StickyNote, Tag, ChevronDown, Check } from 'lucide-react';
 import { generateId, isValidTimeRange, getMingguKe } from '../utils/dateUtils';
 import { KATEGORI_LABEL } from '../utils/exportUtils';
 
@@ -13,6 +13,7 @@ export const PJ_LIST = [
   'Ananda Andriano. S',
   'Adam Ali Muhammad',
   'M Febriyanto B',
+  'Siti Wulandari',
   'Seluruh Anggota',
   'Koordinator Lapangan',
 ];
@@ -31,7 +32,7 @@ const EMPTY_FORM = {
   waktu_mulai:   '08:00',
   waktu_selesai: '09:00',
   keterangan:    '',
-  pj:            '',
+  pj:            [],
   catatan:       '',
   kategori:      'proker',
 };
@@ -46,8 +47,13 @@ export default function ActivityModal({ isOpen, onClose, onSave, initialData }) 
   useEffect(() => {
     if (isOpen) {
       setForm(initialData
-        ? { ...initialData, catatan: initialData.catatan ?? '', kategori: initialData.kategori ?? 'proker' }
-        : { ...EMPTY_FORM }
+        ? { 
+            ...initialData, 
+            catatan: initialData.catatan ?? '', 
+            kategori: initialData.kategori ?? 'proker',
+            pj: initialData.pj ? initialData.pj.split(',').map(s => s.trim()) : []
+          }
+        : { ...EMPTY_FORM, pj: [] }
       );
       setErrors({});
     }
@@ -83,7 +89,7 @@ export default function ActivityModal({ isOpen, onClose, onSave, initialData }) 
         !isValidTimeRange(form.waktu_mulai, form.waktu_selesai))
                                                   errs.waktu_selesai = 'Waktu selesai harus setelah waktu mulai.';
     if (!form.keterangan.trim())                  errs.keterangan    = 'Keterangan wajib diisi.';
-    if (!form.pj.trim())                          errs.pj            = 'Penanggung jawab wajib diisi.';
+    if (!form.pj || form.pj.length === 0)         errs.pj            = 'Penanggung jawab wajib diisi.';
     return errs;
   };
 
@@ -95,6 +101,7 @@ export default function ActivityModal({ isOpen, onClose, onSave, initialData }) 
     
     const submittedData = {
       ...form,
+      pj: form.pj.join(', '),
       catatan: form.catatan.trim() || null,
     };
     
@@ -203,25 +210,20 @@ export default function ActivityModal({ isOpen, onClose, onSave, initialData }) 
 
           {/* PJ — dropdown */}
           <Field label="Penanggung Jawab (PJ)" icon={<User size={14} />} error={errors.pj} required>
-            <select
-              id="field-pj"
-              name="pj"
-              value={form.pj}
-              onChange={handleChange}
-              className="input-base"
-            >
-              <option value="">— Pilih Penanggung Jawab —</option>
-              <optgroup label="👥 Anggota KKN 057">
-                {PJ_LIST.slice(0, 8).map((name) => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </optgroup>
-              <optgroup label="📋 Grup">
-                {PJ_LIST.slice(8).map((name) => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </optgroup>
-            </select>
+            <MultiSelectDropdown
+              options={[
+                { isHeader: true, label: '👥 Anggota KKN 057' },
+                ...PJ_LIST.slice(0, 9).map(name => ({ value: name })),
+                { isHeader: true, label: '📋 Grup' },
+                ...PJ_LIST.slice(9).map(name => ({ value: name }))
+              ]}
+              selected={form.pj}
+              onChange={(newPj) => {
+                setForm(prev => ({ ...prev, pj: newPj }));
+                if (errors.pj) setErrors(prev => ({ ...prev, pj: undefined }));
+              }}
+              error={errors.pj}
+            />
           </Field>
 
           {/* Catatan */}
@@ -271,6 +273,98 @@ export default function ActivityModal({ isOpen, onClose, onSave, initialData }) 
         .input-base::placeholder { color: #9ca3af; }
         select.input-base { cursor: pointer; }
       `}</style>
+    </div>
+  );
+}
+
+function MultiSelectDropdown({ options, selected, onChange, error }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleOption = (option) => {
+    if (selected.includes(option)) {
+      onChange(selected.filter((o) => o !== option));
+    } else {
+      onChange([...selected, option]);
+    }
+  };
+
+  const renderSelected = () => {
+    if (!selected || selected.length === 0) {
+      return <span className="text-[#9ca3af]">— Pilih Penanggung Jawab —</span>;
+    }
+    if (selected.length <= 2) {
+      return (
+        <div className="flex gap-1.5 flex-wrap">
+          {selected.map((s) => (
+            <span key={s} className="px-2 py-0.5 rounded bg-[#e6f4ee] text-[#006633] text-[11px] font-bold whitespace-nowrap border border-[#bbf7d0]">
+              {s}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <span className="px-2 py-0.5 rounded bg-[#e6f4ee] text-[#006633] text-[11px] font-bold border border-[#bbf7d0]">
+        {selected.length} dipilih
+      </span>
+    );
+  };
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <div 
+        className={`input-base flex items-center justify-between cursor-pointer min-h-[38px] ${error ? 'border-red-400' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        style={isOpen ? { borderColor: '#006633', boxShadow: '0 0 0 3px rgba(0, 102, 51, 0.12)' } : {}}
+      >
+        <div className="flex-1 overflow-hidden flex items-center">
+          {renderSelected()}
+        </div>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+      
+      {isOpen && (
+        <div className="absolute z-50 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-56 overflow-y-auto py-2 custom-scroll"
+             style={{ border: '1.5px solid rgba(0,102,51,0.15)' }}>
+          {options.map((opt, i) => {
+            if (opt.isHeader) {
+              return (
+                <div key={'header'+i} className="px-4 py-1.5 text-[10px] font-extrabold text-gray-500 tracking-wider uppercase mt-1 mb-1">
+                  {opt.label}
+                </div>
+              );
+            }
+            const isSelected = selected.includes(opt.value);
+            return (
+              <div 
+                key={opt.value}
+                onClick={() => toggleOption(opt.value)}
+                className="flex items-center px-4 py-2 cursor-pointer hover:bg-[#f0faf4] transition-colors"
+              >
+                <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center mr-3 transition-all ${
+                  isSelected ? 'bg-[#006633] border-[#006633]' : 'border-gray-300'
+                }`}>
+                  {isSelected && <Check size={11} className="text-white" strokeWidth={3} />}
+                </div>
+                <span className={`text-sm ${isSelected ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                  {opt.value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
