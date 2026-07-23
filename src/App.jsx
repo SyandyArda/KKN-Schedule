@@ -7,6 +7,7 @@ import ActivityModal from './components/ActivityModal';
 import DeleteConfirmModal from './components/DeleteConfirmModal';
 import EmptyState from './components/EmptyState';
 import DailyScheduleModal from './components/DailyScheduleModal';
+import PinModal from './components/PinModal';
 import Toast from './components/Toast';
 import { exportToExcel } from './utils/exportUtils';
 import { supabase } from './lib/supabase';
@@ -27,6 +28,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
   const [activeWeek, setActiveWeek] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedDateForModal, setSelectedDateForModal] = useState(null);
@@ -46,15 +48,19 @@ export default function App() {
       localStorage.removeItem('isAdmin');
       showToast('Mode Admin dinonaktifkan', 'success');
     } else {
-      const pin = prompt('Tanya ke Arda');
-      if (pin === 'KKN057') {
-        setIsAdmin(true);
-        localStorage.setItem('isAdmin', 'true');
-        showToast('Mode Admin aktif', 'success');
-      } else if (pin !== null) {
-        alert('PIN Salah!');
-      }
+      setPinModalOpen(true);
     }
+  };
+
+  const handlePinSubmit = (pin) => {
+    if (pin === 'KKN057') {
+      setIsAdmin(true);
+      localStorage.setItem('isAdmin', 'true');
+      showToast('Mode Admin aktif', 'success');
+      setPinModalOpen(false);
+      return true; // Success
+    }
+    return false; // Failed
   };
 
   /* ── Fetch Data from Supabase ── */
@@ -395,6 +401,12 @@ export default function App() {
         onClose={() => setSelectedDateForModal(null)}
         date={selectedDateForModal}
         activities={activities}
+      />
+
+      <PinModal
+        isOpen={pinModalOpen}
+        onClose={() => setPinModalOpen(false)}
+        onSubmit={handlePinSubmit}
       />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
